@@ -4,8 +4,7 @@ This repository is a personal experiment based on the research work presented in
 
 ## Paper Reference:
 - **Learning to Answer Questions in Dynamic Audio-Visual Scenarios**  
-  Authors: Li, Gewu, et al.  
-  Published in: *CVPR 2022*  
+  Li, Gewu, et al.,  CVPR 2022  
   [Read the Paper](https://openaccess.thecvf.com/content/CVPR2022/papers/Li_Learning_To_Answer_Questions_in_Dynamic_Audio-Visual_Scenarios_CVPR_2022_paper.pdf)
 
 ## Datasets:
