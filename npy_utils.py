@@ -51,7 +51,7 @@ q_feat[key=question_id]: dictionary of features for questions
 
 """
 
-data_path = '/scratch/gilbreth/ko112'
+data_path = 'your_dataset_path'
 
 class AVQADataset(Dataset):
 
