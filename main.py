@@ -9,9 +9,9 @@ import os
 import wandb
 import argparse
 from tqdm import tqdm
-from npy_models import AVQA
-from npy_utils import AVQADataset
-from npy_plot import create_report
+from models import AVQA
+from utils import AVQADataset
+from plot import create_report
 
 import datetime
 import matplotlib.pyplot as plt
