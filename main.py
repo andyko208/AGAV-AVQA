@@ -129,11 +129,9 @@ def train(epoch, n_epochs, rank, model, criterion, train_loader, optimizer, sche
         
         # Forward
         av_loss, ag_loss, pred = model(a, v, q, mask)
-        # loss = av_loss * 0.3 + criterion(pred, ans)
         ce_loss = criterion(pred, ans)
         # print(f'av_loss: {av_loss.item()}, ag_loss: {ag_loss.item()}, ce_loss: {loss.item()}')
-        # loss = ce_loss + 0.1 * av_loss + ag_loss * 0.1
-        loss = ce_loss
+        loss = ce_loss + 0.5 * av_loss + ag_loss * 0.2
         loss.backward()
         
         # Backward
