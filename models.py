@@ -74,31 +74,6 @@ class CrossAttentionBlock(nn.Module):
 
         return f_n
 
-class GaussianNoise(nn.Module):
-    """Gaussian noise regularizer.
-
-    Args:
-        sigma (float, optional): relative standard deviation used to generate the
-            noise. Relative means that it will be multiplied by the magnitude of
-            the value your are adding the noise to. This means that sigma can be
-            the same regardless of the scale of the vector.
-        is_relative_detach (bool, optional): whether to detach the variable before
-            computing the scale of the noise. If `False` then the scale of the noise
-            won't be seen as a constant but something to optimize: this will bias the
-            network to generate vectors with smaller values.
-    """
-    def __init__(self, sigma=0.5, is_relative_detach=True):
-        super().__init__()
-        self.sigma = sigma
-        self.is_relative_detach = is_relative_detach
-        self.register_buffer('noise', torch.tensor(0))
-
-    def forward(self, x):
-        if self.training and self.sigma != 0:
-            scale = self.sigma * x.detach() if self.is_relative_detach else self.sigma * x
-            sampled_noise = self.noise.expand(*x.size()).float().normal_() * scale
-            x = x + sampled_noise
-        return x
 
 """
 Use this to reduce down the spatial information of visual features
@@ -200,8 +175,6 @@ class AVQA(nn.Module):
         self.a_mlp = MLP(128, embed_dim)
         self.v_mlp = MLP(512, embed_dim)
         self.q_mlp = MLP(768, embed_dim)
-        # self.q_512 = MLP(768, 512)
-        self.q_128 = MLP(768, 128)
         
         self.a_proj = AudioProj(embed_dim)
         self.v_proj = VisualProj(embed_dim)
@@ -209,8 +182,6 @@ class AVQA(nn.Module):
         self.v_pool_mlp = MLP(128, 128)
         self.av_pool_mlp = MLP(128, 128)
         self.avq_pool_mlp = MLP(512, 256)
-
-
 
         self.q_encoder = Q_Encoder()
         # self.av_loss = SoftDTW(use_cuda=True, gamma=0.1)
@@ -235,68 +206,35 @@ class AVQA(nn.Module):
         margin = 0.5
         cos_sim = F.cosine_similarity(a, v, dim=-1)  # Shape: (batch_size, sequence_length)
         sim_loss = (margin - cos_sim).mean()
-        # sim_loss = cos_sim.mean()
-        
-        # a_distr = F.softmax(a, dim=-1)
-        # v_distr = F.softmax(v, dim=-1)
-        # div_loss = torch.sum(a_distr * (torch.log(a_distr) - torch.log(v_distr)), dim=-1).mean()
 
-        # return av_loss + div_loss
-        # print(f'av - av_loss: {av_loss}', end=', ', flush=True)
-
-        # av_loss = sim_loss + div_loss
-        av_loss = sim_loss
-        # av_loss = div_loss
-
-        return av_loss
+        return sim_loss
     
     """
     Apply loss for disagreement on the sectors where each modality does better
     """
     def agreement_loss(self, aq, vq):
-        
-        # margin = 1.0
-        # cos_sim = F.cosine_similarity(aq, vq, dim=-1)  # Shape: (batch_size, sequence_length)
-        # sim_loss = F.relu(margin - cos_sim).mean()
 
         a_distr = F.softmax(aq, dim=-1)
         v_distr = F.softmax(vq, dim=-1)
         div_loss = F.relu(torch.sum(a_distr * (torch.log(a_distr) - torch.log(v_distr)), dim=-1)).mean()
         
-        # return sim_loss
         return div_loss
-        # return sim_loss + div_loss
         
     
     def forward(self, a, v, q, attn_mask):  
 
         q_raw = self.q_encoder(q, attn_mask).unsqueeze(1)
 
-        a = self.a_mlp(a)                                                # (B, 60, 512)
-        v = self.v_mlp(v)                                                # (B, 60, 512)
-        # pooled_a = self.a_pool_mlp(F.adaptive_max_pool1d(a, 128))        # (B, 60, 128)
-        # pooled_v = self.v_pool_mlp(F.adaptive_max_pool1d(v, 128))        # (B, 60, 128)
-        q = self.q_mlp(q_raw)                           # (B, 1, 128)
-        q_128 = self.q_128(q_raw)
-
-        # print(pooled_a.shape, pooled_v.shape, q.shape)
-        # av = torch.concat((a, v), dim=-1)           # (B, 60, 1024)
-        # avq = self.avq_attn(q_1024, av, av)         # (B, 60, 1024)
+        a = self.a_mlp(a)                           # (B, 60, 512)
+        v = self.v_mlp(v)                           # (B, 60, 512)
+        q = self.q_mlp(q_raw)                       # (B, 1, 128)
         
-        # Try adaptive 2d here to insert temporal dimension
-        # av = self.av_attn(pooled_v, pooled_a, pooled_a)                           # (B, 60, 128)
-        # av = self.av_pool_mlp(F.adaptive_max_pool1d(torch.concat((pooled_a, pooled_v), dim=-1), 128)) # (B, 60, 128)
-        # print(f'av: {av.shape}')
-        # avq = self.avq_attn(q_128, av, av)                                      # (B, 1, 128)
-        # print(f'avq_shape:: {avq.shape:}')
         
         vq = self.vq_attn(q, v, v)                  # (B, 1, 512)
-        # print(f'vq_shape: {vq.shape:}')
         aq = self.aq_attn(q, a, v)                  # (B, 1, 512)
 
         aqvq = self.avq_pool_mlp(F.adaptive_max_pool1d(torch.concat((aq, vq), dim=-1), 512))    # (B, 1, 512)
-        # print(f'aq_shape: {aq.shape:}')
-        # avqa = torch.concat((avq, aqvq), dim=-1)    # (B, 60, 256)
+        
 
         av_loss = self.av_align_loss(a, v)
         ag_loss = self.agreement_loss(aq, vq)
