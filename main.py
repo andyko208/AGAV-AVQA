@@ -344,7 +344,7 @@ def main(rank):
         train_start = time.time()
 
         optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
         criterion = nn.CrossEntropyLoss()
         
         n_epochs = args.ep
