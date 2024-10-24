@@ -59,7 +59,7 @@ class AVQADataset(Dataset):
 
         super().__init__()
 
-        paths = [f'{data_path}/data/vggish_1fps', f'{data_path}/data/resnet_1fps']
+        paths = [f'{data_path}/data/vggish', f'{data_path}/data/resnet']
         # paths = [f'{data_path}/data/vggish_1fps', f'{data_path}/data/r2plus1d_18']
         
         av_samples = os.listdir(paths[0])    # Exact same number of files for each dir
