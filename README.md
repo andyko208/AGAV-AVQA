@@ -3,7 +3,7 @@
 This repository is a personal exploration of the research work presented in the paper **Learning to Answer Questions in Dynamic Audio-Visual Scenarios**. 
 
 ## Preprint
-- [Audio Visual Agreement for Audio-Visual Question Answering][https://andyko208.github.io/documents/AV_AG_preprint.pdf]
+- [Audio Visual Agreement for Audio-Visual Question Answering](https://andyko208.github.io/documents/AV_AG_preprint.pdf)
 
 ## Paper Reference:
 - **[Learning to Answer Questions in Dynamic Audio-Visual Scenarios](https://openaccess.thecvf.com/content/CVPR2022/papers/Li_Learning_To_Answer_Questions_in_Dynamic_Audio-Visual_Scenarios_CVPR_2022_paper.pdf)**
